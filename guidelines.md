@@ -35,6 +35,7 @@
 | 3 Feb 2020 | Jaakko Leinonen, Mikael Linden | Removed solution #1, refined solution #3 as the proposed solution and changed solution #2 to model the OAuth2 flow; restructured document |
 | 14 Feb 2020 | Jaakko Leinonen, Mikael Linden | Version 1.0 |
 | 9 Mar 2020 | Alexander Kanitz | Version 1.1: converted to markdown and put in GitHub repository |
+| 20 April 2020 | Vivek Raj | Version 1.2: adding OAuth2 security conventions |
 
 ## 1. Background and requirements
 
@@ -374,13 +375,34 @@ necessary to introduce a new parameter to WES API.
 Sections 2.1 and 2.2 above do not define which client is able to call an API as
 long as the client can attach a valid access token with a valid scope to the
 call. It is out of scope for both the OAuth2 and OIDC protocols to control which
-clients can invoke an API, including the WES, TES and DRS API.
+clients can invoke an API, including the WES, TES, and DRS API.
+
+#### Disclaimer
+The following feature supports OAuth security practices. It is the new feature and 
+it is possible that it may or may not be supported in many places of development.
 
 If it is desirable to limit the WES, TES and DRS API calls only to particular
-clients, it is proposed that the APIs are configured to require client
-credentials (e.g. a shared secret or a public key) and each API has an
-associated access control list allowing calls only by trusted clients. This
-approach is static, i.e. is the same for all users.
+clients (Third-party application), and it is proposed that the APIs are configured
+to require the client credentials (e.g., a shared secret or a public key) and this
+particular secret work as a prerequisite for the acceptance of that credentials at
+a APIs calls as well as each API has an associated access control list allowing calls
+only by trusted clients.
+The workflow for this client-access management looks like:
+- The OAuth server associates data with the access token that binds this
+  particular token to a certain client. The binding can utilize the client identity,
+  but in most cases, the OAuth server utilizes key material (or data derived
+  from the key material) known to the client.
+- This key material must be distributed somehow. Either the key material already
+  exists before the OAuth server creates the binding, or the OAuth
+  server creates ephemeral keys. The way pre-existing key material is distributed
+  varies among the different approaches. For example, [X.509 Certificates](https://en.wikipedia.org/wiki/X.509)
+  can be used in which case the distribution happens explicitly during the enrollment
+  process. Or the key material is created and distributed at the TLS layer, in which
+  case it might automatically occur during the setup of a TLS connection.
+- The APIs must implement the actual proof of possession check. It is
+  typically done on the application level, often tied to specific material provided 
+  by the transport layer (e.g., TLS). It must also ensure that the
+  replay of the proof of possession is not possible.
 
 ## 3. Conclusions
 
