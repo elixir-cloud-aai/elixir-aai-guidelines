@@ -36,6 +36,7 @@
 | 14 Feb 2020 | Jaakko Leinonen, Mikael Linden | Version 1.0 |
 | 9 Mar 2020 | Alexander Kanitz | Version 1.1: converted to markdown and put in GitHub repository |
 | 20 April 2020 | Vivek Raj | Version 1.2: adding OAuth2 security conventions |
+| 5 May 2020 | Mikael Linden | Issue #3: replacing single access token by three of them |
 
 ## 1. Background and requirements
 
@@ -172,16 +173,16 @@ select a suitable service provider from the portal for their needs. The
 user/portal decides WES1, TES2 and DRS3 will be used.
 
 The user is redirected to ELIXIR AAI for authentication before submitting the
-workflow. The portal uses regular OAuth2 Authorisation code flow to obtain an
-access token from AS (arrows 2,4,5,6). After a successful authentication ELIXIR
-AAI will ask the user to give their permission to the portal and the downstream
-system components to initiate a workflow in WES1 (scope=WES1_execute), initiate
-a task in TES2 (scope=TES2_execute) and access files in DRS3 (DRS3_read) on
-behalf of themselves (arrow 3).
+workflow. The portal initiates three regular OAuth2 Authorisation code flows to obtain three 
+access token from AS (arrows Z,Z,Z,Z);
+- one ("at4WES") that will permit its holder (the portal) to initiate a workflow in WES1 (scope=WES1_execute)
+- one ("at4TES") that will permit its holder (in particular, WES) to initiate a task in TES2 (scope=TES2_execute)
+- one ("at4DRS") that will permit its holder (in particular, TES) to access files in DRS3 (scope=DRS3_read)
+After a successful authentication ELIXIR AAI will ask the user to give their permission to these three actions (in OAuth2 speak, "authorise the scopes"), one by one.
 
 To initiate the workflow in WES1 the portal calls the API of WES1 and attaches
-the access token to the request (arrow 7). WES1 validates the access token
-(arrows 8,9) and checks that it has the scope that is needed for its API call
+the "at4WES" access token to the request (arrow Z). Also "at4TES" and "at4DRS" access tokens are attached to the call for later use. WES1 validates the "at4WES" access token
+(arrows Z,Z) and checks that it has the scope that is needed for its API call
 (scope=WES1_execute). If the access token is invalid or does not contain the
 scope WES1 will reject the request. For an expired access token a refresh
 process will be tried, see [section
@@ -189,8 +190,8 @@ process will be tried, see [section
 workflow into tasks (if needed) and select suitable TES(es) for running the
 tasks.
 
-WES1 calls the APIs of the relevant TES(es) and attaches the access token to the
-request(s) (arrow 11). TES2 validates the access token (arrows 12,13) and checks
+WES1 calls the APIs of the relevant TES(es) and attaches the"at4TES" access token to the
+request(s) (arrow Z). Also "at4DRS" access token is attached to the call for later use. TES2 validates the "at4TES" access token (arrows z,z) and checks
 that it has the scope that is needed for its API call (scope=TES2_execute). If
 the access token is invalid or does not contain the scope TES2 will reject the
 request. For an expired access token a refresh process will be tried, see
@@ -198,8 +199,8 @@ request. For an expired access token a refresh process will be tried, see
 is acceptable, TES2 initiates the job.
 
 Should TES2 access a dataset in DRS3 to execute the task, it needs to call the
-DRS3 API and attach the access token to the request (arrow 15). DRS3 then
-validates the access token (arrows 16,17) and checks that it has the scope that
+DRS3 API and attach the "at4DRS" access token to the request (arrow z). DRS3 then
+validates the access token (arrows z,z) and checks that it has the scope that
 is needed for its API call (scope=DRS3_read). If the access token is invalid or
 does not contain the scope DRS3 will reject the request. For an expired access
 token a refresh process will be tried, see [section
@@ -224,7 +225,7 @@ TES or DRS but need to be renewed by the Portal, which is the OAuth2 client that
 initially received the access token from the AS. To renew an access token, the
 Portal must call the AS’s token endpoint with a specific refresh-token grant
 type and attach the refresh token that the AS provided in the initial token
-response (arrow 6 in MSC1).
+response (arrow Z in MSC1).
 
 The system component that attaches an access token to an API call will learn
 that the access token is expired at the latest when the API call is rejected
@@ -284,13 +285,13 @@ behalf of themself:
 > Proposed design choice: **Each WES, TES and DRS instance has (exactly) one
 > scope.**
 >
-> Provided it has sufficient scopes, a single access token may be used by WES to
-> access TES API, and by TES to access DRS API. Alternatively, there may be
-> separate access tokens (with separate scopes) for calling the WES API and TES
-> API but it wouldn’t have an impact on the overall security design because the
-> Portal needs to hand both access tokens to WES anyway. The OAuth2
+> The design above introduces 
+> separate access tokens (with separate scopes) for the Portal calling the WES API, WES calling the TES
+> API and TES calling the DRS API.
+> Alternatively, provided it had sufficient scopes, a single access token could be used by WES to
+> access TES API, and by TES to access DRS API. The OAuth2
 > Authorization Server asking the user to authorise just one access token with
-> sufficient scopes may simplify the user experience.
+> sufficient scopes could simplify the user experience. However, that design would fail the 'least privilege' information security principle, enabling a (rogue) TES call the WES API and a (rogue) DRS call the WES and TES APIs.
 
 ### 2.2. Enforcing access and resource quota
 
@@ -415,7 +416,7 @@ Section 2 introduced different solutions to solve different problems:
   rights and make them accountable for their consumption of resources;
 - Client credentials to enable proper access management of the API calls.
 
-The three approaches can be used together; a single access token can have the
+The three approaches can be used together; an access token can have the
 OAuth2 scopes to manage delegation of resource access and the necessary OpenID
 scopes that enable the relying service to fetch user’s attributes from OP’s
 userinfo endpoint. The Message sequence chart 3 below presents how these
