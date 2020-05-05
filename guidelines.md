@@ -446,25 +446,38 @@ User --> Portal : Submit workflow
 
 Note over Portal: Portal/user decides to use WES1, TES2 and DRS3
 
-Portal -> AAI : Authorisation request\n[scope=WES1_execute,TES2_execute,DRS3_read]
+Portal -> AAI : Authorisation request\n[scope=WES1_execute]
 AAI <--> User : Authentication & scope approval
 AAI -> Portal : Authorisation response\n[authorisation_code]
 Portal -> AAI : Access token request\n[authorisation_code]
-AAI -> Portal : Access token response\n[access_token,refresh_token]
+AAI -> Portal : Access token response\n[at4WES,refresh_token]
 
-Portal --> WES1 : Submit workflow\n[access_token]
-WES1 -> AAI : Introspection request\n[access_token]
-AAI -> WES1 : Introspection response\n[scope=WES1_execute,TES2_execute,DRS3_read]
+Portal -> AAI : Authorisation request\n[TES2_execute]
+AAI <--> User : Scope approval
+AAI -> Portal : Authorisation response\n[authorisation_code]
+Portal -> AAI : Access token request\n[authorisation_code]
+AAI -> Portal : Access token response\n[at4TES,refresh_token]
+
+Portal -> AAI : Authorisation request\n[DRS3_read]
+AAI <--> User : Scope approval
+AAI -> Portal : Authorisation response\n[authorisation_code]
+Portal -> AAI : Access token request\n[authorisation_code]
+AAI -> Portal : Access token response\n[at4DRS,refresh_token]
+
+
+Portal --> WES1 : Submit workflow\n[at4WES,at4TES,at4DRS]
+WES1 -> AAI : Introspection request\n[at4WES]
+AAI -> WES1 : Introspection response\n[scope=WES1_execute]
 WES1 --> Portal : Submit response
 
-WES1 --> TES2: Send task\n[access_token]
-TES2 -> AAI : Introspection request\n[access_token]
-AAI -> TES2 : Introspection response\n[scope=WES1_execute,TES2_execute,DRS3_read]
+WES1 --> TES2: Send task\n[at4TES,at4DRS]
+TES2 -> AAI : Introspection request\n[AT4TES]
+AAI -> TES2 : Introspection response\n[scope=TES2_execute]
 TES2 --> WES1 : Send response
 
-TES2 --> DRS3 : Data request\n[access_token]
-DRS3 -> AAI : Introspection request\n[access_token]
-AAI -> DRS3: Introspection response\n[scope=WES1_execute,TES2_execute,DRS3_read]
+TES2 --> DRS3 : Data request\n[at4DRS]
+DRS3 -> AAI : Introspection request\n[at4DRS]
+AAI -> DRS3: Introspection response\n[scope=DRS3_read]
 DRS3 --> TES2 : Data response
 @enduml
 ```
