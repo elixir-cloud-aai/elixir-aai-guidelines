@@ -174,15 +174,15 @@ user/portal decides WES1, TES2 and DRS3 will be used.
 
 The user is redirected to ELIXIR AAI for authentication before submitting the
 workflow. The portal initiates three regular OAuth2 Authorisation code flows to obtain three 
-access token from AS (arrows Z,Z,Z,Z);
+access token from AS (arrows 2-6,7-11,12-16);
 - one ("at4WES") that will permit its holder (the portal) to initiate a workflow in WES1 (scope=WES1_execute)
 - one ("at4TES") that will permit its holder (in particular, WES) to initiate a task in TES2 (scope=TES2_execute)
 - one ("at4DRS") that will permit its holder (in particular, TES) to access files in DRS3 (scope=DRS3_read)
 After a successful authentication ELIXIR AAI will ask the user to give their permission to these three actions (in OAuth2 speak, "authorise the scopes"), one by one.
 
 To initiate the workflow in WES1 the portal calls the API of WES1 and attaches
-the "at4WES" access token to the request (arrow Z). Also "at4TES" and "at4DRS" access tokens are attached to the call for later use. WES1 validates the "at4WES" access token
-(arrows Z,Z) and checks that it has the scope that is needed for its API call
+the "at4WES" access token to the request (arrow 17). Also "at4TES" and "at4DRS" access tokens are attached to the call for later use. WES1 validates the "at4WES" access token
+(arrows 18-19) and checks that it has the scope that is needed for its API call
 (scope=WES1_execute). If the access token is invalid or does not contain the
 scope WES1 will reject the request. For an expired access token a refresh
 process will be tried, see [section
@@ -191,7 +191,7 @@ workflow into tasks (if needed) and select suitable TES(es) for running the
 tasks.
 
 WES1 calls the APIs of the relevant TES(es) and attaches the"at4TES" access token to the
-request(s) (arrow Z). Also "at4DRS" access token is attached to the call for later use. TES2 validates the "at4TES" access token (arrows z,z) and checks
+request(s) (arrow 21). Also "at4DRS" access token is attached to the call for later use. TES2 validates the "at4TES" access token (arrows 22-23) and checks
 that it has the scope that is needed for its API call (scope=TES2_execute). If
 the access token is invalid or does not contain the scope TES2 will reject the
 request. For an expired access token a refresh process will be tried, see
@@ -199,8 +199,8 @@ request. For an expired access token a refresh process will be tried, see
 is acceptable, TES2 initiates the job.
 
 Should TES2 access a dataset in DRS3 to execute the task, it needs to call the
-DRS3 API and attach the "at4DRS" access token to the request (arrow z). DRS3 then
-validates the access token (arrows z,z) and checks that it has the scope that
+DRS3 API and attach the "at4DRS" access token to the request (arrow 21). DRS3 then
+validates the access token (arrows 22-23) and checks that it has the scope that
 is needed for its API call (scope=DRS3_read). If the access token is invalid or
 does not contain the scope DRS3 will reject the request. For an expired access
 token a refresh process will be tried, see [section
@@ -225,7 +225,7 @@ TES or DRS but need to be renewed by the Portal, which is the OAuth2 client that
 initially received the access token from the AS. To renew an access token, the
 Portal must call the AS’s token endpoint with a specific refresh-token grant
 type and attach the refresh token that the AS provided in the initial token
-response (arrow Z in MSC1).
+response (arrows 6, 11 and 16 in MSC1).
 
 The system component that attaches an access token to an API call will learn
 that the access token is expired at the latest when the API call is rejected
