@@ -178,6 +178,7 @@ access token from AS (arrows 2-6,7-11,12-16);
 - one ("at4WES") that will permit its holder (the portal) to initiate a workflow in WES1 (scope=WES1_execute)
 - one ("at4TES") that will permit its holder (in particular, WES) to initiate a task in TES2 (scope=TES2_execute)
 - one ("at4DRS") that will permit its holder (in particular, TES) to access files in DRS3 (scope=DRS3_read)
+
 After a successful authentication ELIXIR AAI will ask the user to give their permission to these three actions (in OAuth2 speak, "authorise the scopes"), one by one.
 
 To initiate the workflow in WES1 the portal calls the API of WES1 and attaches
@@ -199,8 +200,8 @@ request. For an expired access token a refresh process will be tried, see
 is acceptable, TES2 initiates the job.
 
 Should TES2 access a dataset in DRS3 to execute the task, it needs to call the
-DRS3 API and attach the "at4DRS" access token to the request (arrow 21). DRS3 then
-validates the access token (arrows 22-23) and checks that it has the scope that
+DRS3 API and attach the "at4DRS" access token to the request (arrow 25). DRS3 then
+validates the access token (arrows 26-27) and checks that it has the scope that
 is needed for its API call (scope=DRS3_read). If the access token is invalid or
 does not contain the scope DRS3 will reject the request. For an expired access
 token a refresh process will be tried, see [section
@@ -283,7 +284,7 @@ behalf of themself:
   instance to access a user’s datasets.
 
 > Proposed design choice: **Each WES, TES and DRS instance has (exactly) one
-> scope.**
+> scope** (in the diagram, WES1_excecute, TES2_execute and DRS3_read where the number identifies the instance).
 >
 > The design above introduces 
 > separate access tokens (with separate scopes) for the Portal calling the WES API, WES calling the TES
@@ -361,7 +362,7 @@ expired access token.
 #### 2.2.3. How to select which ELIXIR AAI group resources to use for the computation
 
 ELIXIR AAI manages — and can deliver to the Portal — the list of user’s groups
-([groupNames attribute][elixir-aai-group-names]) potentially representing the
+([eduPersonEntitlement attribute][elixir-aai-group-names]) potentially representing the
 projects they are involved in. The Portal can then ask the user to select the
 group they are currently active in, and that information can be used by the
 downstream WES to select proper TES(es) and by TES(es) to account the consumed
